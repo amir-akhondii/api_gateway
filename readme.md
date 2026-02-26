@@ -1,128 +1,137 @@
-# پروژه Gateway API
+# 🚀 Gateway API Project
 
-## معرفی پروژه
+## 📖 Project Overview
 
-این پروژه یک **API Gateway** ساده بر پایه Django REST Framework است که وظیفه هدایت درخواست‌ها به سرویس‌های میکروسرویس مختلف را بر عهده دارد.  
-همچنین امکاناتی مثل نمایش مستندات Swagger هر سرویس و بررسی سلامت سرویس‌ها را فراهم می‌کند.
+This project is a simple **API Gateway** built using **Django REST Framework**.  
+It routes requests to multiple microservices, provides dynamic **Swagger documentation** for each service, and performs **health checks** to monitor service status.  
 
----
-
-## ویژگی‌ها
-
-- **پروکسی کردن درخواست‌ها** به سرویس‌های مختلف با توجه به مسیر درخواست
-- دریافت و نمایش مستندات Swagger هر سرویس به صورت داینامیک
-- چک کردن وضعیت سلامت (Health Check) سرویس‌ها
-- پیکربندی سرویس‌ها در فایل تنظیمات برای انعطاف‌پذیری
-- اجرا و مدیریت سرویس‌ها به کمک Docker و Docker Compose
-
----
-## توضیح کلی درباره APIهای پروکسی و چک سلامت
-
-در این پروژه، یک گیت‌وی مرکزی ساخته‌ایم که نقش واسط بین کلاینت‌ها (مثلاً فرانت‌اند) و سرویس‌های مختلف میکروسرویس‌ها را دارد. این گیت‌وی امکانات مهمی فراهم می‌کند که در ادامه به صورت کلی شرح داده می‌شود:
-
-### 1. پروکسی کردن درخواست‌ها و نمایش مستندات سرویس‌ها  
-کلاس `ProxyDocsAPIView` وظیفه دارد درخواست‌های مربوط به مستندات API هر سرویس را دریافت کند و به صورت داینامیک آن مستندات را از سرویس مربوطه بگیرد و به کلاینت برگرداند.  
-با این روش:  
-- نیازی نیست کلاینت مستقیم به هر سرویس وصل شود.  
-- مستندات همه سرویس‌ها به صورت متمرکز در یک نقطه قابل دسترس هستند.  
-- نگهداری و تغییر آدرس سرویس‌ها فقط در تنظیمات گیت‌وی انجام می‌شود و کلاینت‌ها نیازی به تغییر ندارند.
-
-### 2. بررسی سلامت سرویس‌ها (Health Check)  
-کلاس `HealthCheckAPIView` به صورت دوره‌ای وضعیت سرویس‌های مختلف را بررسی می‌کند و نتیجه را به صورت گزارش سلامت به کلاینت‌ها یا سیستم‌های مانیتورینگ ارائه می‌دهد.  
-این موضوع کمک می‌کند:  
-- سریع متوجه شوید که کدام سرویس‌ها فعال یا غیرفعال هستند.  
-- بهبود پایداری سیستم با امکان انجام اقدامات لازم روی سرویس‌های مشکل‌دار.  
-- افزایش اطمینان از صحت عملکرد کل سامانه.
-
-#### ۳. ارتباط فرانت‌اند با این سیستم
-
-فرانت‌اند باید فقط از طریق گیت‌وی مرکزی با سرویس‌ها ارتباط برقرار کند و هیچ‌وقت به صورت مستقیم به میکروسرویس‌ها درخواست ندهد. این کار باعث امنیت، سادگی و مدیریت بهتر می‌شود.
-
-#### آدرس‌های API که فرانت‌اند استفاده می‌کند:
-
-| نام API           | روش HTTP | مسیر             | توضیح                                      |
-|-------------------|----------|------------------|--------------------------------------------|
-| دریافت مستندات   | GET      | `/docs/{service}/` | برای گرفتن مستندات Swagger هر سرویس به صورت داینامیک؛ `{service}` نام سرویس مورد نظر است (مثلاً `user`، `order` و غیره). فرانت‌اند می‌تواند این اطلاعات را برای نمایش مستندات یا بررسی امکانات سرویس‌ها استفاده کند. |
-| بررسی سلامت سیستم | GET      | `/health/`        | وضعیت سلامت کلیه سرویس‌ها را برمی‌گرداند؛ فرانت‌اند می‌تواند این API را به صورت دوره‌ای فراخوانی کند تا نمایش دهد سرویس‌ها سالم هستند یا مشکلی دارند. |
+Think of it as the **central hub 🧩** that keeps all your microservices connected and healthy!
 
 ---
 
-### نکات مهم برای استفاده از APIها در فرانت‌اند:
+## ✨ Features
 
-۱. **ارسال درخواست‌ها به گیت‌وی:**
-- همه درخواست‌های داده‌ای باید از طریق گیت‌وی انجام شوند.
-- برای مثال اگر می‌خواهید داده‌ای از سرویس `order` بگیرید، باید به آدرس `http://gateway-url/docs/order/` یا دیگر مسیرهای گیت‌وی درخواست دهید.
-
-۲. **دریافت مستندات هر سرویس:**
-- با فراخوانی `GET /docs/{service}/` می‌توانید مستندات API آن سرویس را دریافت کنید.
-- این برای نمایش داینامیک مستندات یا بررسی امکانات سرویس‌ها بسیار کاربردی است.
-
-۳. **بررسی وضعیت سلامت:**
-- با فراخوانی `GET /health/` می‌توانید وضعیت سلامت همه سرویس‌ها را دریافت کنید.
-- فرانت‌اند می‌تواند این اطلاعات را نمایش دهد یا در صورت ناسالم بودن سرویس‌ها به کاربر اطلاع دهد.
-
-۴. **خطاها و مدیریت آنها:**
-- اگر سرویس مورد نظر در `SERVICE_MAP` تعریف نشده باشد، پاسخ با کد ۴۰۴ باز می‌گردد.
-- اگر سرویس در دسترس نباشد یا مشکلی در اتصال وجود داشته باشد، پاسخ با کد ۵۰۳ همراه با پیام خطا بازگردانده می‌شود.
-- فرانت‌اند باید این حالات را مدیریت کند و پیام مناسب به کاربر نمایش دهد.
-
-۵. **احراز هویت و امنیت:**
-- همه‌ی درخواست‌ها باید شامل توکن یا روش احراز هویت مورد نظر گیت‌وی باشند.
-- هیچ درخواست مستقیمی نباید به میکروسرویس‌ها ارسال شود تا امنیت حفظ شود.
+- 🔀 **Request Proxying** – Route requests to different microservices based on URL paths  
+- 📄 **Dynamic Swagger Docs** – Fetch and display API docs from each service in real-time  
+- 💓 **Health Checks** – Monitor the status of all services  
+- ⚙️ **Configurable Services** – Add or update service endpoints in a single settings file  
+- 🐳 **Docker & Docker Compose** – Easy deployment and management of all services  
 
 ---
 
-### نمونه درخواست‌ها:
+## 🛠️ API Proxy & Health Check Overview
 
-- گرفتن مستندات سرویس `user`:
+This gateway acts as the **central entry point** between clients (frontend) and microservices.  
+
+### 1️⃣ Proxy Requests & Display Service Docs
+
+The `ProxyDocsAPIView` class dynamically fetches Swagger documentation from the target service and returns it to the client.  
+
+Benefits:  
+- Clients never need to connect directly to individual services 🌐  
+- Centralized documentation for all microservices 📚  
+- Update service URLs only in gateway settings 🔧  
+
+### 2️⃣ Health Checks
+
+The `HealthCheckAPIView` class monitors the status of all services and reports to clients or monitoring systems.  
+
+Benefits:  
+- Quickly detect active/inactive services ⚡  
+- Improve reliability by handling failing services 🛡️  
+- Ensure the overall system is running smoothly ✅  
+
+### 3️⃣ Frontend Integration
+
+Frontend should only communicate via the gateway.  
+**Never send requests directly to microservices** – this ensures **security, simplicity, and manageability**.  
+
+#### API Endpoints for Frontend
+
+| API Name               | HTTP Method | Path                 | Description |
+|------------------------|------------|--------------------|-------------|
+| 📝 Get Service Docs    | GET        | `/docs/{service}/`  | Fetch dynamic Swagger docs for a service (`{service}` = `user`, `order`, etc.). Useful for rendering docs or checking service features. |
+| 💓 System Health Check | GET        | `/health/`          | Returns the health status of all services. Can be polled periodically to monitor system status. |
+
+---
+
+### ⚠️ Important Frontend Notes
+
+1. **Send all requests through the gateway**  
+   Example: `http://gateway-url/docs/order/` for the `order` service.
+
+2. **Retrieve service documentation**  
+   Call `GET /docs/{service}/` to dynamically fetch the Swagger docs.
+
+3. **Check service health**  
+   Call `GET /health/` to monitor all services and display status.
+
+4. **Error Handling**  
+   - Service not defined in `SERVICE_MAP` → 404 response ❌  
+   - Service unavailable → 503 response ⚠️  
+   - Frontend should handle these gracefully and notify users.
+
+5. **Authentication & Security**  
+   - Include a valid token or auth method for all requests 🔑  
+   - No direct microservice requests allowed for security reasons 🛡️
+
+---
+
+### 🔍 Example Request
+
+- Fetch Swagger docs for the `user` service:
 
 ```http
 GET http://gateway-url/docs/user/
 Authorization: Bearer <token>
 ```
-### جمع‌بندی کلی  
-با پیاده‌سازی این APIها و ساختار گیت‌وی، ما:  
-- یک نقطه ورود متمرکز برای کل سیستم میکروسرویس‌ها ایجاد کرده‌ایم  
-- امنیت، مدیریت، و مانیتورینگ سیستم را بهبود داده‌ایم  
-- کار با چندین سرویس مختلف را برای فرانت‌اند ساده کرده‌ایم  
-- امکان مقیاس‌پذیری و نگهداری آسان‌تر کل سامانه را فراهم کرده‌ایم.
-
-این روش معماری بسیار متداول و استاندارد در سیستم‌های مبتنی بر میکروسرویس است و پایه‌ای برای توسعه سیستم‌های بزرگ و قابل اعتماد محسوب می‌شود.
 
 ---
 
-## ساختار پروژه
+### 📌 Summary
+
+With this API Gateway:  
+- Single **entry point** for all microservices 🏛️  
+- **Improved security, monitoring, and management** 🔒  
+- Simplified frontend integration 🎯  
+- Scalable and maintainable system architecture 📈  
+
+This is a **standard architecture for microservice systems** and a solid foundation for large, reliable applications.
+
+---
+
+## 🗂️ Project Structure
 
 ```
 ├── db.sqlite3
 ├── gateway
-│   ├── asgi.py
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
 ├── manage.py
 └── proxy
-├── apps.py
-├── urls.py
-└── views.py
+    ├── apps.py
+    ├── urls.py
+    └── views.py
 ├── Dockerfile
 ├── docker-compose.yml
-├── run.sh
-
+└── run.sh
 ```
 
 ---
 
-## راهنمای استفاده
+## ⚡ Usage Guide
 
-### پیش‌نیازها
+### Prerequisites
 
-- نصب Docker و Docker Compose  
-- تنظیم آدرس سرویس‌ها در `gateway/settings.py` در بخش `SERVICE_MAP` به شکل زیر:
+- Docker 🐳 & Docker Compose  
+- Configure your services in `gateway/settings.py` under `SERVICE_MAP`:
 
 ```python
 SERVICE_MAP = {
     "auth": "http://auth-service:8000",
     "user": "http://user-service:8001",
-    # سایر سرویس‌ها
+    # other services
 }
+```
